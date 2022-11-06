@@ -1,42 +1,34 @@
-require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const connection = require('./db');
+const { application } = require("express");
+const express = require("express");
+require("dotenv").config();
 
 const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get('/api/users', (req, res) => {
-  connection.query('SELECT * FROM user', (err, results) => {
-    if (err) {
-      res.status(500).json({
-        error: err.message,
-        sql: err.sql,
-      });
-    } else {
-      res.json(results);
-    }
-  });
-});
+const port = process.env.APP_PORT ?? 5000;
 
-app.post('/api/users', (req, res) => {
-  connection.query('INSERT INTO user SET ?', req.body, (err, results) => {
-    if (err) {
-      res.status(500).json({
-        error: err.message,
-        sql: err.sql,
-      });
-    } else {
-      res.json(results);
-    }
-  });
-});
+app.use(express.json());
 
-app.listen(process.env.PORT, (err) => {
+const welcome = (req, res) => {
+  res.send("Welcome to my favourite movie list");
+};
+
+app.get("/", welcome);
+
+const movieHandlers = require("./movieHandlers");
+const userHandlers = require("./userHandlers");
+
+app.get("/api/movies", movieHandlers.getMovies);
+app.get("/api/movies/:id", movieHandlers.getMovieById);
+app.post("/api/movies", movieHandlers.postMovie);
+
+app.get("/api/users", userHandlers.getUsers);
+app.get("/api/users/:id", userHandlers.getUserById);
+app.post("/api/users", userHandlers.postUser);
+
+app.listen(port, (err) => {
   if (err) {
-    throw new Error('Something bad happened...');
+    console.error("Something bad happened");
+  } else {
+    console.log(`Server is listening on ${port}`);
   }
-
-  console.log(`Server is listening on ${process.env.PORT}`);
 });
